@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>桌面宠物 v3.0 - 完全版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{width:100vw;height:100vh;overflow:hidden;background:linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);font-family:'Microsoft YaHei','Segoe UI',sans-serif;}
+
+/* 星空 */
+.star{position:fixed;background:#fff;border-radius:0;animation:twinkle 2s infinite;}
+@keyframes twinkle{0%,100%{opacity:.15}50%{opacity:1}}
+
+/* 宠物主体 */
+#pet-wrap{position:fixed;cursor:grab;user-select:none;z-index:100;}
+#pet-wrap:active{cursor:grabbing;}
+
+/* 说话气泡 */
+#speech{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:#1e1b4b;border:2px solid #7c3aed;padding:8px 14px;color:#e2e8f0;
+  font-size:12px;max-width:220px;white-space:normal;text-align:center;
+  box-shadow:3px 3px 0 #4c1d95;z-index:200;animation:bubbleIn .2s ease;line-height:1.5;}
+#speech::after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:#7c3aed;}
+#speech.hidden{display:none;}
+@keyframes bubbleIn{from{opacity:0;transform:translateY(6px) translateX(-50%)}to{opacity:1;transform:translateY(0) translateX(-50%)}}
+
+/* 快捷按钮 */
+.qbtns{display:flex;justify-content:center;gap:4px;margin-top:5px;}
+.qbtn{width:28px;height:28px;border:2px solid #7c3aed;background:#1e1b4b;color:#fff;
+  font-size:13px;cursor:pointer;transition:all .1s;box-shadow:2px 2px 0 #4c1d95;}
+.qbtn:hover{background:#7c3aed;transform:translate(-1px,-1px);box-shadow:3px 3px 0 #4c1d95;}
+.qbtn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #4c1d95;}
+
+/* 粒子 */
+.particle{position:fixed;pointer-events:none;z-index:999;animation:floatUp 1s ease-out forwards;font-size:18px;}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-35px)}}
+
+/* 面板 */
+#panel{position:fixed;right:16px;top:16px;bottom:16px;width:318px;
+  background:#0a0a1a;border:2px solid #7c3aed;box-shadow:4px 4px 0 #4c1d95;
+  display:flex;flex-direction:column;overflow:hidden;}
+#ph{background:#1e1b4b;border-bottom:2px solid #7c3aed;padding:12px 14px;}
+.pnrow{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:#e2e8f0;}
+.pname{font-size:15px;font-weight:700;color:#a78bfa;}
+.psub{font-size:11px;color:#8b5cf6;}
+.sbar-wrap{margin-top:4px;}
+.sbar-label{font-size:10px;color:#8b9ac8;margin-bottom:2px;display:flex;justify-content:space-between;}
+.sbar{height:6px;background:#1a1a3e;border:1px solid #4c1d95;}
+.sfill{height:100%;transition:width .5s;}
+
+/* 标签 */
+.tabs{display:flex;border-bottom:2px solid #7c3aed;background:#13122b;font-size:20px;}
+.tab{flex:1;padding:8px 0;background:none;border:none;color:#6b7280;cursor:pointer;
+  border-bottom:3px solid transparent;transition:all .15s;text-align:center;}
+.tab:hover{color:#a78bfa;background:#1e1b4b22;}
+.tab.on{color:#a78bfa;border-bottom-color:#7c3aed;background:#1e1b4b;}
+
+#pbody{flex:1;overflow-y:auto;padding:14px;scrollbar-width:thin;scrollbar-color:#7c3aed #1e1b4b;}
+#pbody::-webkit-scrollbar{width:4px;}
+#pbody::-webkit-scrollbar-track{background:#1e1b4b;}
+#pbody::-webkit-scrollbar-thumb{background:#7c3aed;}
+
+.stitle{font-size:11px;font-weight:700;color:#7c3aed;margin-bottom:10px;
+  text-transform:uppercase;letter-spacing:2px;border-bottom:1px solid #2d2b5e;padding-bottom:4px;}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;}
+.abtn{background:#13122b;border:2px solid #2d2b5e;color:#c4b5fd;padding:8px 6px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-size:10px;font-weight:700;transition:all .1s;box-shadow:2px 2px 0 #1a1040;}
+.abtn:hover{border-color:#7c3aed;background:#1e1b4b;transform:translate(-1px,-1px);
+  box-shadow:3px 3px 0 #4c1d95;color:#a78bfa;}
+.abtn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #4c1d95;}
+.abtn .ic{font-size:18px;}
+
+input,select{width:100%;background:#13122b;border:2px solid #2d2b5e;color:#e2e8f0;
+  padding:7px 10px;font-size:12px;outline:none;font-family:inherit;border-radius:0;transition:border-color .2s;}
+input:focus,select:focus{border-color:#7c3aed;}
+input::placeholder{color:#4b5563;}
+.flabel{font-size:11px;color:#6b7280;margin-bottom:3px;margin-top:8px;}
+
+.pxbtn{width:100%;background:#7c3aed;color:#fff;border:2px solid #a78bfa;padding:9px;
+  cursor:pointer;font-size:12px;font-weight:700;letter-spacing:1px;
+  box-shadow:3px 3px 0 #4c1d95;margin-top:8px;transition:all .1s;}
+.pxbtn:hover{background:#6d28d9;transform:translate(-1px,-1px);box-shadow:4px 4px 0 #4c1d95;}
+.pxbtn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #4c1d95;}
+.pxbtn.sec{background:#1e1b4b;color:#a78bfa;border-color:#4c1d95;}
+
+.todo-item{display:flex;align-items:flex-start;gap:8px;background:#13122b;
+  border:1px solid #2d2b5e;padding:8px 10px;margin-bottom:5px;font-size:12px;}
+.todo-item:hover{border-color:#7c3aed;}
+.todo-item input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:#7c3aed;flex-shrink:0;margin-top:2px;}
+.tdone{text-decoration:line-through;color:#4b5563!important;}
+.tdel{background:none;border:none;color:#4b5563;cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0;}
+.tdel:hover{color:#ef4444;}
+
+.titem{background:#13122b;border:1px solid #2d2b5e;padding:10px;margin-bottom:6px;font-size:12px;}
+.titem.run{border-color:#10b981;}
+.titem.done{border-color:#ef4444;background:#1f0505;}
+.tprog{height:4px;background:#2d2b5e;margin-top:6px;}
+.tbar{height:100%;background:#10b981;transition:width 1s linear;}
+.trow{display:flex;gap:4px;margin-top:6px;}
+.sm{background:#1e1b4b;border:1px solid #4c1d95;color:#a78bfa;padding:3px 8px;cursor:pointer;font-size:11px;}
+.sm:hover{background:#7c3aed;color:#fff;}
+.smr{border-color:#7f1d1d;color:#ef4444;}
+.smr:hover{background:#ef4444;color:#fff;}
+.smg{border-color:#065f46;color:#10b981;}
+.smg:hover{background:#10b981;color:#fff;}
+
+.ecard{background:linear-gradient(135deg,#1e1b4b,#2d1b69);border:2px solid #7c3aed;
+  box-shadow:4px 4px 0 #4c1d95;padding:20px;text-align:center;margin-bottom:12px;}
+.ea{font-size:36px;font-weight:900;color:#f9a8d4;font-family:'Courier New',monospace;text-shadow:0 0 20px #a78bfa;}
+.egrd{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;}
+.ecard2{background:#13122b;border:1px solid #2d2b5e;padding:10px;font-size:12px;}
+
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.tag{background:#13122b;border:1px solid #2d2b5e;color:#8b9ac8;padding:4px 10px;
+  cursor:pointer;font-size:11px;transition:all .1s;}
+.tag:hover,.tag.on{background:#7c3aed;border-color:#a78bfa;color:#fff;}
+
+.empty{text-align:center;color:#4b5563;font-size:12px;padding:24px;}
+#pfoot{padding:6px 14px;border-top:2px solid #2d2b5e;font-size:10px;color:#4b5563;
+  text-align:center;background:#13122b;letter-spacing:1px;}
+#notifs{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;}
+.notif{background:#1e1b4b;border:2px solid #10b981;color:#e2e8f0;padding:10px 20px;
+  font-size:13px;box-shadow:4px 4px 0 #065f46;animation:pop .3s ease;}
+@keyframes pop{0%{transform:scale(0)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+</style>
+</head>
+<body>
+<div id="notifs"></div>
+
+<div id="pet-wrap">
+  <div id="speech" class="hidden"></div>
+  <canvas id="pc" width="128" height="128" style="image-rendering:pixelated;display:block;margin:0 auto;"></canvas>
+  <div class="qbtns">
+    <button class="qbtn" onclick="doAct('pet')" title="摸头">🤚</button>
+    <button class="qbtn" onclick="doAct('eat')" title="零食">🍖</button>
+    <button class="qbtn" onclick="doAct('play')" title="玩耍">🎾</button>
+  </div>
+</div>
+
+<div id="panel">
+  <div id="ph">
+    <div class="pnrow">
+      <span id="char-ico" style="font-size:22px">🐕</span>
+      <div>
+        <div class="pname" id="dname">小饼干</div>
+        <div class="psub" id="dmood">狗狗 · 开心 😊</div>
+      </div>
+    </div>
+    <div class="sbar-wrap">
+      <div class="sbar-label"><span>❤️ 快乐</span><span id="bv-h">85%</span></div>
+      <div class="sbar"><div class="sfill" id="bf-h" style="width:85%;background:#f472b6"></div></div>
+    </div>
+    <div class="sbar-wrap">
+      <div class="sbar-label"><span>🍗 饱腹</span><span id="bv-f">70%</span></div>
+      <div class="sbar"><div class="sfill" id="bf-f" style="width:70%;background:#fb923c"></div></div>
+    </div>
+    <div class="sbar-wrap">
+      <div class="sbar-label"><span>⚡ 活力</span><span id="bv-e">90%</span></div>
+      <div class="sbar"><div class="sfill" id="bf-e" style="width:90%;background:#4ade80"></div></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-t="pet" onclick="sw('pet')">🐾</button>
+    <button class="tab" data-t="todo" onclick="sw('todo')">📋</button>
+    <button class="tab" data-t="timer" onclick="sw('timer')">⏱️</button>
+    <button class="tab" data-t="work" onclick="sw('work')">💰</button>
+    <button class="tab" data-t="cfg" onclick="sw('cfg')">⚙️</button>
+  </div>
+
+  <div id="pbody">
+    <!-- 宠物页 -->
+    <div id="t-pet" style="display:block">
+      <div class="stitle">与宠物互动</div>
+      <div class="agrid">
+        <button class="abtn" onclick="doAct('pet')"><div class="ic">🤚</div>摸摸头</button>
+        <button class="abtn" onclick="doAct('roll')"><div class="ic">🔄</div>打个滚</button>
+        <button class="abtn" onclick="doAct('bath')"><div class="ic">🛁</div>洗澡澡</button>
+        <button class="abtn" onclick="doAct('eat')"><div class="ic">🍖</div>吃零食</button>
+        <button class="abtn" onclick="doAct('play')"><div class="ic">🎾</div>玩玩具</button>
+        <button class="abtn" onclick="doAct('sleep')"><div class="ic">💤</div>去睡觉</button>
+        <button class="abtn" onclick="doAct('comfort')" style="border-color:#f472b633;color:#f9a8d4"><div class="ic">💕</div>哄哄我</button>
+        <button class="abtn" onclick="doAct('walk')"><div class="ic">🚶</div>散步走走</button>
+      </div>
+
+      <div class="stitle">换装扮</div>
+      <div id="cos-tags" class="tags"></div>
+      
+      <div class="stitle">切换角色</div>
+      <div id="char-tags" class="tags"></div>
+    </div>
+
+    <!-- 待办页 -->
+    <div id="t-todo" style="display:none">
+      <div class="stitle">待办事项</div>
+      <div class="flabel">事项名称</div>
+      <input type="text" id="ti" placeholder="添加待办..." onkeydown="if(event.key==='Enter')addTodo()">
+      <div class="flabel">截止时间（可选）</div>
+      <input type="datetime-local" id="td">
+      <button class="pxbtn" onclick="addTodo()">＋ 添加</button>
+      <div style="margin-top:12px" id="tlist"></div>
+    </div>
+
+    <!-- 计时器页 -->
+    <div id="t-timer" style="display:none">
+      <div class="stitle">计时提醒</div>
+      <div class="flabel">计时器名称</div>
+      <input type="text" id="tmn" placeholder="例如：喝水提醒">
+      <div class="flabel">时长</div>
+      <select id="tmd">
+        <option value="60">1 分钟</option>
+        <option value="300" selected>5 分钟</option>
+        <option value="600">10 分钟</option>
+        <option value="900">15 分钟</option>
+        <option value="1800">30 分钟</option>
+        <option value="3600">1 小时</option>
+      </select>
+      <button class="pxbtn" onclick="addTimer()">＋ 添加计时器</button>
+      <div style="margin-top:12px" id="tmlist"></div>
+    </div>
+
+    <!-- 工作页 -->
+    <div id="t-work" style="display:none">
+      <div id="wd">
+        <div class="stitle">今日收入</div>
+        <div class="ecard">
+          <div style="font-size:11px;color:#8b5cf6;letter-spacing:2px;margin-bottom:6px">TODAY · EARNED</div>
+          <div class="ea" id="earn">¥0.00</div>
+          <div style="font-size:11px;color:#8b5cf6;margin-top:6px" id="emsg"></div>
+          <div style="font-size:10px;color:#6b7280;margin-top:3px" id="eper"></div>
+        </div>
+        <div class="egrd" id="estats"></div>
+        <button class="pxbtn sec" onclick="showWF()">⚙ 修改配置</button>
+      </div>
+      <div id="wf" style="display:none">
+        <div class="stitle">工作配置</div>
+        <div class="flabel">月薪（元）</div>
+        <input type="number" id="ws" value="10000">
+        <div class="flabel">月工作天数</div>
+        <input type="number" id="wday" value="22">
+        <div class="flabel">上班时间（时:分）</div>
+        <input type="time" id="wst" value="09:30">
+        <div class="flabel">下班时间（时:分）</div>
+        <input type="time" id="wet" value="18:30">
+        <button class="pxbtn" onclick="saveWork()">💾 保存</button>
+      </div>
+    </div>
+
+    <!-- 设置页 -->
+    <div id="t-cfg" style="display:none">
+      <div class="stitle">宠物设置</div>
+      <div class="flabel">宠物名字</div>
+      <input type="text" id="sn" placeholder="起个名字">
+      <button class="pxbtn" onclick="saveName()" style="margin-top:8px">保存名字</button>
+      
+      <div class="stitle" style="margin-top:16px">宠物位置</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+        <button class="sm" onclick="mvPet(20,20)">左上</button>
+        <button class="sm" onclick="mvPet(20,window.innerHeight-200)">左下</button>
+        <button class="sm" onclick="mvPet(window.innerWidth/2-64,window.innerHeight/2-80)">居中</button>
+        <button class="sm" onclick="mvPet(window.innerWidth-200,20)">右上</button>
+      </div>
+      
+      <div class="stitle" style="margin-top:16px">数据管理</div>
+      <button class="pxbtn sec" style="margin-top:8px" onclick="if(confirm('确定清除所有数据？'))clearAll()">🗑 清除本地数据</button>
+    </div>
+  </div>
+
+  <div id="pfoot">v3.0 完全版 | Made with 💕</div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// 像素艺术绘制引擎（完全按v3）
+// ════════════════════════════════════════════
+const CV = document.getElementById('pc');
+const cx = CV.getContext('2d');
+cx.imageSmoothingEnabled = false;
+
+const S = 6;
+const OX = 16, OY = 16;
+
+const THEMES = {
+  dog:   { 1:'#A86B42', 2:'#F2EBD9', 3:'#2E1C12' },
+  bunny: { 1:'#FFFFFF', 2:'#FADBD8', 3:'#3A2860' },
+  fox:   { 1:'#DC7633', 2:'#FFFFFF', 3:'#1A1010' },
+  tiger: { 1:'#FFFFFF', 2:'#E0E0E0', 3:'#1A1010' }
+};
+
+const FRAMES = {
+  idle: [
+    "0000000000000000",
+    "0000000000000000",
+    "0000111111100000",
+    "0001122122110000",
+    "0001233133210000",
+    "0001233133210000",
+    "0001122322110000",
+    "0000111111100000",
+    "0000012221000000",
+    "0000112221100000",
+    "0001122222110000",
+    "0001112221110000",
+    "0001111111110000",
+    "0000011011000000",
+    "0000011011000000",
+    "0000000000000000"
+  ],
+  sleep: [
+    "0000000000000000",
+    "0000000000000000",
+    "0000111111100000",
+    "0001122122110000",
+    "0001222122210000",
+    "0001233133210000",
+    "0001122322110000",
+    "0000111111100000",
+    "0000012221000000",
+    "0000112221100000",
+    "0001122222110000",
+    "0001112221110000",
+    "0001111111110000",
+    "0000011011000000",
+    "0000011011000000",
+    "0000000000000000"
+  ]
+};
+
+function drawGrid(grid, char) {
+  const theme = THEMES[char] || THEMES.dog;
+  for (let y = 0; y < 16; y++) {
+    for (let x = 0; x < 16; x++) {
+      const val = grid[y][x];
+      if (val !== '0') {
+        cx.fillStyle = theme[val];
+        cx.fillRect(OX + x * S, OY + y * S, S, S);
+      }
+    }
+  }
+}
+
+function drawAddons(char) {
+  const theme = THEMES[char] || THEMES.dog;
+  cx.fillStyle = theme['1'];
+  
+  if (char === 'dog') {
+    cx.fillRect(OX + 4*S, OY + 1*S, 2*S, 2*S);
+    cx.fillRect(OX + 9*S, OY + 1*S, 2*S, 2*S);
+    cx.fillRect(OX + 12*S, OY + 11*S, 2*S, 2*S);
+  } else if (char === 'fox') {
+    cx.fillRect(OX + 3*S, OY + 0*S, 2*S, 3*S);
+    cx.fillRect(OX + 10*S, OY + 0*S, 2*S, 3*S);
+    cx.fillRect(OX + 12*S, OY + 9*S, 3*S, 4*S);
+    cx.fillStyle = theme['2'];
+    cx.fillRect(OX + 13*S, OY + 9*S, 2*S, 2*S);
+  } else if (char === 'bunny') {
+    cx.fillRect(OX + 4*S, OY - 2*S, 2*S, 5*S);
+    cx.fillRect(OX + 9*S, OY - 2*S, 2*S, 5*S);
+    cx.fillStyle = theme['2'];
+    cx.fillRect(OX + 4.5*S, OY - 1*S, 1*S, 3*S);
+    cx.fillRect(OX + 9.5*S, OY - 1*S, 1*S, 3*S);
+    cx.fillStyle = theme['1'];
+    cx.fillRect(OX + 12*S, OY + 12*S, 2*S, 2*S);
+  } else if (char === 'tiger') {
+    cx.fillStyle = theme['1'];
+    cx.fillRect(OX + 2*S, OY + 1*S, 3*S, 2*S);
+    cx.fillRect(OX + 10*S, OY + 1*S, 3*S, 2*S);
+    cx.fillStyle = theme['3'];
+    cx.fillRect(OX + 3*S, OY + 1*S, 1*S, 1*S);
+    cx.fillRect(OX + 11*S, OY + 1*S, 1*S, 1*S);
+    cx.fillStyle = theme['1'];
+    cx.fillRect(OX + 12*S, OY + 11*S, 3*S, 1*S);
+  }
+}
+
+function drawCostume(id) {
+  if (id === 'default') return;
+  if (id === 'cap') {
+    cx.fillStyle = '#D34035';
+    cx.fillRect(OX + 4*S, OY + 1*S, 8*S, 2*S);
+    cx.fillRect(OX + 10*S, OY + 2*S, 3*S, 1*S);
+  } else if (id === 'glasses') {
+    cx.fillStyle = '#111';
+    cx.fillRect(OX + 3*S, OY + 4*S, 4*S, 3*S);
+    cx.fillRect(OX + 8*S, OY + 4*S, 4*S, 3*S);
+    cx.fillRect(OX + 7*S, OY + 5*S, 1*S, 1*S);
+  } else if (id === 'hoodie') {
+    cx.fillStyle = '#3498DB';
+    cx.fillRect(OX + 3*S, OY + 9*S, 9*S, 4*S);
+    cx.fillStyle = '#F1C40F';
+    cx.fillRect(OX + 7*S, OY + 10*S, 1*S, 1*S);
+  } else if (id === 'bow') {
+    cx.fillStyle = '#FF69B4';
+    cx.fillRect(OX + 6*S, OY + 8*S, 3*S, 1*S);
+    cx.fillRect(OX + 7*S, OY + 9*S, 2*S, 1*S);
+    cx.fillRect(OX + 10*S, OY + 8*S, 3*S, 1*S);
+    cx.fillRect(OX + 10*S, OY + 9*S, 2*S, 1*S);
+    cx.fillStyle = '#C71585';
+    cx.fillRect(OX + 9*S, OY + 8*S, 1*S, 2*S);
+  } else if (id === 'crown') {
+    cx.fillStyle = '#F1C40F';
+    cx.fillRect(OX + 5*S, OY + 0*S, 5*S, 3*S);
+    cx.clearRect(OX + 6*S, OY + 0*S, 1*S, 1*S);
+    cx.clearRect(OX + 8*S, OY + 0*S, 1*S, 1*S);
+  }
+}
+
+function drawActionProps(action) {
+  if (action === 'sleep') {
+    cx.fillStyle = '#90C8E8';
+    cx.font = `bold ${S*2}px monospace`;
+    cx.fillText('z', OX + 13*S, OY + 4*S);
+    cx.font = `bold ${S*3}px monospace`;
+    cx.fillText('Z', OX + 15*S, OY + 0*S);
+  } else if (action === 'bath') {
+    cx.strokeStyle = '#90D0F8'; cx.lineWidth = 2;
+    cx.beginPath(); cx.arc(OX + 2*S, OY + 5*S, 6, 0, Math.PI*2); cx.stroke();
+    cx.beginPath(); cx.arc(OX + 14*S, OY + 12*S, 8, 0, Math.PI*2); cx.stroke();
+  } else if (action === 'play') {
+    cx.fillStyle = '#6AC020';
+    cx.beginPath();
+    cx.arc(OX + 14.5*S, OY + 13.5*S, 1.5 * S, 0, Math.PI * 2);
+    cx.fill();
+    cx.fillStyle = 'rgba(255,255,255,0.5)';
+    cx.beginPath();
+    cx.arc(OX + 14*S, OY + 13*S, 0.5 * S, 0, Math.PI * 2);
+    cx.fill();
+  } else if (action === 'eat') {
+    cx.fillStyle = '#B8C8D8';
+    cx.fillRect(OX + 5*S, OY + 14*S, 5*S, 2*S);
+  }
+}
+
+let blinkT = 0, blinking = false;
+let currentChar = 'dog', currentAction = 'idle', currentCostume = 'cap';
+
+function petLoop() {
+  blinkT++;
+  if(blinkT > 100 && !blinking){ blinking = true; blinkT = 0; }
+  if(blinking && blinkT > 5){ blinking = false; blinkT = 0; }
+
+  cx.clearRect(0, 0, 128, 128);
+  
+  let frame = 'idle';
+  if(currentAction === 'sleep' || blinking || currentAction === 'pet') {
+    frame = 'sleep';
+  }
+  
+  drawAddons(currentChar);
+  drawGrid(FRAMES[frame], currentChar);
+  drawCostume(currentCostume);
+  drawActionProps(currentAction);
+  
+  requestAnimationFrame(petLoop);
+}
+petLoop();
+
+// ════════════════════════════════════════════
+// 状态与逻辑
+// ════════════════════════════════════════════
+let st = {
+  name:'小饼干',
+  char:'dog',
+  costume:'cap',
+  happy:85,
+  food:70,
+  energy:90,
+  px:100,
+  py:150,
+  todos:[],
+  timers:{},
+  timerDefs:[],
+  workCfg:{sal:10000, days:22, startTime:'09:30', endTime:'18:30'},
+  lastWorkRemind:0
+};
+
+const SPEECHES = {
+  greet: ['汪！主人好～ 今天也要开心哦！🐾','又见面啦！好想你呢～ 💕','早上好～ 我们一起加油！✨'],
+  pet: ['呜～好舒服！摸摸最棒了！💕','嗯嗯～继续摸～🥰','舒服死了，再摸一会～😴'],
+  eat: ['啊呜～零食超好吃！谢谢！🍖','咔吧咔吧～好香呀！😋','吃饱饱啦！打个饱嗝～😄'],
+  play: ['汪！球球！一起玩！🎾','玩得好开心～继续啦！🎉','你最棒，我们一起跑！🏃'],
+  bath: ['哗啦啦～洗澡咯！好香！🛁','冲冲冲～清爽多了！✨','讨厌水水～但是好舒服～🫧'],
+  sleep: ['呼噜～好困好困… zZZ 💤','做个好梦～晚安～🌙','今天也很疲惫呢…💤'],
+  walk: ['溜达溜达，出去走走！🐾','外面风景真美～一起散步吧！🌳','汪汪～探险去！🗺️'],
+  comfort: ['加油！我会一直陪着你的！🌟','你最棒的～不要放弃！💪','我永远支持你！爱你～💗'],
+  timer: ['嘀～嘀～时间到啦～！⏰','提醒宝宝啦～快快快！⏱️','嘀嘀嘀～别忘记哦！🔔'],
+  todo: ['完成啦～你真棒！✨','一个任务搞定了～再来一个？💪','哎呀呀～你好厉害～🎉'],
+  work: ['你工作这么努力～我为你骄傲！💪','下班啦～今天也辛苦了～🫂','又赚钱钱啦～你最棒！💰']
+};
+
+function speak(msg, dur=3000){
+  const sp = document.getElementById('speech');
+  sp.textContent = msg;
+  sp.classList.remove('hidden');
+  clearTimeout(window.spTO);
+  window.spTO = setTimeout(()=>sp.classList.add('hidden'), dur);
+}
+
+function save(){ 
+  try{
+    localStorage.setItem('dpet_v3_full', JSON.stringify({...st, timers:{}}));
+  }catch(e){}
+}
+
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem('dpet_v3_full') || '{}');
+    if(s.name) st.name = s.name;
+    if(s.char) { st.char = s.char; currentChar = s.char; }
+    if(s.costume) { st.costume = s.costume; currentCostume = s.costume; }
+    if(s.todos) st.todos = s.todos;
+    if(s.timerDefs) st.timerDefs = s.timerDefs;
+    if(s.workCfg) st.workCfg = s.workCfg;
+    if(s.px !== undefined) st.px = s.px;
+    if(s.py !== undefined) st.py = s.py;
+    if(s.happy) st.happy = s.happy;
+    if(s.food) st.food = s.food;
+    if(s.energy) st.energy = s.energy;
+  }catch(e){}
+}
+
+function updHdr(){
+  document.getElementById('dname').textContent = st.name;
+  const cn = { dog:'狗狗', bunny:'小白兔', fox:'小狐狸', tiger:'白虎' };
+  document.getElementById('dmood').textContent = `${cn[st.char]||'宠物'} · 开心 😊`;
+  document.getElementById('char-ico').textContent = { dog:'🐕', bunny:'🐰', fox:'🦊', tiger:'🐯' }[st.char]||'🐾';
+  
+  [['h',st.happy,'#f472b6'],['f',st.food,'#fb923c'],['e',st.energy,'#4ade80']].forEach(([k,v,c])=>{
+    document.getElementById(`bv-${k}`).textContent = Math.round(v)+'%';
+    const el = document.getElementById(`bf-${k}`);
+    if(el){
+      el.style.width=v+'%';
+      el.style.background = v>60 ? c : v>30 ? '#fbbf24' : '#ef4444';
+    }
+  });
+}
+
+function updPetPos(){
+  const w = document.getElementById('pet-wrap');
+  w.style.left = st.px + 'px';
+  w.style.top = st.py + 'px';
+}
+
+let speechTO = null;
+
+// ════════════════════════════════════════════
+// 宠物互动
+// ════════════════════════════════════════════
+let actTO;
+function doAct(type){
+  clearTimeout(actTO);
+  
+  const map = {
+    pet: {msgs: SPEECHES.pet, dh:10},
+    eat: {msgs: SPEECHES.eat, df:20, dh:5},
+    play: {msgs: SPEECHES.play, dh:12, de:-10},
+    bath: {msgs: SPEECHES.bath, dh:6},
+    sleep: {msgs: SPEECHES.sleep, de:30},
+    walk: {msgs: SPEECHES.walk, dh:5, de:-5},
+    comfort: {msgs: SPEECHES.comfort, dh:8},
+    roll: {msgs: ['汪汪！打滚转圈圈！好开心！🎉'], dh:8}
+  };
+  
+  const a = map[type];
+  if(!a) return;
+  if(type === 'eat' && st.food >= 100){ speak('我已经吃饱啦！😅'); return; }
+  if(type === 'sleep' && st.energy >= 95){ speak('我精神十足呢～不用睡觉！'); return; }
+  
+  if(a.dh !== undefined) st.happy = Math.min(100, st.happy + a.dh);
+  if(a.df !== undefined) st.food = Math.min(100, st.food + a.df);
+  if(a.de !== undefined) st.energy = Math.max(0, Math.min(100, st.energy + a.de));
+  
+  currentAction = type === 'eat' ? 'eat' : type === 'sleep' ? 'sleep' : type === 'bath' ? 'bath' : 'idle';
+  
+  const msg = a.msgs[Math.floor(Math.random() * a.msgs.length)];
+  speak(msg, 4000);
+  particle(type);
+  updHdr();
+  save();
+  
+  actTO = setTimeout(()=>{ currentAction='idle'; updHdr(); }, 3500);
+}
+
+function particle(type){
+  const emap = {pet:'💕', roll:'🌀', bath:'🫧', eat:'🍖', play:'🎾', sleep:'💤', walk:'🐾', comfort:'💕'};
+  for(let i=0; i<2; i++){
+    const el = document.createElement('div');
+    el.className = 'particle';
+    el.textContent = emap[type] || '✨';
+    el.style.left = (st.px + 50 + (Math.random()-.5)*40) + 'px';
+    el.style.top = (st.py + 20 - i*15) + 'px';
+    el.style.animationDelay = (i*.15) + 's';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 1100);
+  }
+}
+
+// 拖拽
+let drag = false, ox = 0, oy = 0;
+const pw = document.getElementById('pet-wrap');
+pw.addEventListener('mousedown', e=>{drag=true; ox=e.clientX-st.px; oy=e.clientY-st.py; pw.style.transition='none'; e.preventDefault();});
+document.addEventListener('mousemove', e=>{if(!drag)return; st.px=e.clientX-ox; st.py=e.clientY-oy; updPetPos();});
+document.addEventListener('mouseup', ()=>{if(drag){drag=false; pw.style.transition=''; save();}});
+
+// 标签切换
+function sw(name){
+  ['pet','todo','timer','work','cfg'].forEach(t=>{
+    document.getElementById(`t-${t}`).style.display = t===name?'block':'none';
+    document.querySelector(`[data-t="${t}"]`).classList.toggle('on', t===name);
+  });
+  if(name==='work') updWork();
+  if(name==='todo') renderTodos();
+  if(name==='timer') renderTimers();
+}
+
+// ════════════════════════════════════════════
+// 形象换装
+// ════════════════════════════════════════════
+const COSTUMES = [
+  {id:'default',n:'日常装'}, {id:'cap',n:'🧢 棒球帽'}, {id:'hoodie',n:'🧥 卫衣'},
+  {id:'bow',n:'🎀 蝴蝶结'}, {id:'crown',n:'👑 皇冠'}, {id:'glasses',n:'🕶️ 墨镜'}
+];
+const CHARS = [
+  {id:'dog',n:'🐕 狗狗'}, {id:'fox',n:'🦊 小狐狸'}, {id:'bunny',n:'🐰 小白兔'}, {id:'tiger',n:'🐯 白虎'}
+];
+
+function renderCosTags(){ 
+  document.getElementById('cos-tags').innerHTML = COSTUMES.map(c=>`<button class="tag${st.costume===c.id?' on':''}" onclick="setCos('${c.id}')">${c.n}</button>`).join(''); 
+}
+function renderCharTags(){ 
+  document.getElementById('char-tags').innerHTML = CHARS.map(c=>`<button class="tag${st.char===c.id?' on':''}" onclick="setChar('${c.id}')">${c.n}</button>`).join(''); 
+}
+
+function setCos(id){ st.costume = id; currentCostume = id; speak('换装成功！好看吗？✨'); save(); renderCosTags(); }
+function setChar(id){ st.char = id; currentChar = id; speak('我变身啦！✨'); updHdr(); save(); renderCharTags(); }
+
+// ════════════════════════════════════════════
+// 待办
+// ════════════════════════════════════════════
+function addTodo(){
+  const t = document.getElementById('ti').value.trim();
+  if(!t) return;
+  const due = document.getElementById('td').value;
+  st.todos.push({id:Date.now(),text:t,done:false,due});
+  document.getElementById('ti').value = '';
+  document.getElementById('td').value = '';
+  save();
+  renderTodos();
+  speak(`记住啦！"${t}" 已加入清单！📋`);
+}
+
+function toggleTodo(id){ 
+  const x = st.todos.find(t=>t.id===id); 
+  if(x){ 
+    x.done = !x.done;
+    if(x.done) speak(SPEECHES.todo[Math.floor(Math.random()*SPEECHES.todo.length)]);
+  } 
+  save();
+  renderTodos();
+}
+
+function delTodo(id){ st.todos = st.todos.filter(t=>t.id!==id); save(); renderTodos(); }
+
+function renderTodos(){
+  const el = document.getElementById('tlist');
+  if(!el) return;
+  if(!st.todos.length){
+    el.innerHTML='<div class="empty">✨ 暂无待办，好好休息吧～</div>';
+    return;
+  }
+  el.innerHTML = st.todos.map(t=>`
+    <div class="todo-item">
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo(${t.id})">
+      <div style="flex:1">
+        <div style="color:${t.done?'#4b5563':'#c4b5fd'};${t.done?'text-decoration:line-through':''}">${t.text}</div>
+        ${t.due?`<div style="font-size:10px;color:#6b7280">⏰ ${new Date(t.due).toLocaleString('zh-CN')}</div>`:''}
+      </div>
+      <button class="tdel" onclick="delTodo(${t.id})">✕</button>
+    </div>`).join('');
+  const p = st.todos.filter(x=>!x.done).length;
+  if(p) el.innerHTML += `<div style="color:#8b5cf6;font-size:11px;text-align:center;margin-top:8px">还有 ${p} 件待完成，加油！🐾</div>`;
+}
+
+// ════════════════════════════════════════════
+// 计时器
+// ════════════════════════════════════════════
+function addTimer(){
+  const n = document.getElementById('tmn').value.trim();
+  if(!n) return;
+  const dur = +document.getElementById('tmd').value;
+  if(dur <= 0) return;
+  st.timerDefs.push({id:Date.now(),name:n,dur});
+  document.getElementById('tmn').value = '';
+  document.getElementById('tmd').value = '300';
+  save();
+  renderTimers();
+  speak(`"${n}" 计时器已添加！⏱️`);
+}
+
+function startTimer(id){
+  const t = st.timerDefs.find(x=>x.id===id);
+  if(!t) return;
+  st.timers[id] = t.dur;
+  renderTimers();
+  speak(`倒计时开始！${fmt(t.dur)} 后提醒～ ⏰`);
+}
+
+function delTimer(id){ 
+  delete st.timers[id];
+  st.timerDefs = st.timerDefs.filter(x=>x.id!==id);
+  save();
+  renderTimers();
+}
+
+function renderTimers(){
+  const el = document.getElementById('tmlist');
+  if(!el) return;
+  if(!st.timerDefs.length){
+    el.innerHTML='<div class="empty">还没有计时器哦～</div>';
+    return;
+  }
+  el.innerHTML = st.timerDefs.map(t=>{
+    const rem = st.timers[t.id];
+    const run = rem !== undefined && rem > 0;
+    const dn = rem === 0;
+    const pct = run ? (1 - rem/t.dur)*100 : dn ? 100 : 0;
+    return `<div class="titem${run?' run':''}${dn?' done':''}">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:12px;color:#a78bfa;font-weight:700">${dn?'⏰':run?'⏱':''} ${t.name}</div>
+          <div style="font-size:16px;color:#e2e8f0;font-family:monospace;font-weight:700">${run?fmt(rem):dn?'时间到！':fmt(t.dur)}</div>
+        </div>
+        <div class="trow">
+          ${!run&&!dn?`<button class="sm smg" onclick="startTimer(${t.id})">▶</button>`:''}
+          <button class="sm smr" onclick="delTimer(${t.id})">✕</button>
+        </div>
+      </div>
+      ${run?`<div class="tprog"><div class="tbar" style="width:${pct}%"></div></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+setInterval(()=>{
+  let any = false;
+  Object.keys(st.timers).forEach(id=>{
+    if(st.timers[id] > 0){
+      st.timers[id]--;
+      any = true;
+    } else if(st.timers[id] === 0){
+      const t = st.timerDefs.find(x=>x.id === +id);
+      if(t){
+        showNotif(`⏰ "${t.name}" 时间到啦！`);
+        speak(SPEECHES.timer[Math.floor(Math.random()*SPEECHES.timer.length)], 5000);
+        doAct('comfort');
+        st.timers[id] = -1;
+      }
+    }
+  });
+  if(any) renderTimers();
+}, 1000);
+
+function showNotif(msg){
+  const el = document.createElement('div');
+  el.className = 'notif';
+  el.textContent = msg;
+  document.getElementById('notifs').appendChild(el);
+  setTimeout(()=>el.remove(), 5000);
+}
+
+function fmt(s){
+  const h = Math.floor(s/3600).toString().padStart(2,'0');
+  const m = Math.floor((s%3600)/60).toString().padStart(2,'0');
+  return `${h}:${m}:${(s%60).toString().padStart(2,'0')}`;
+}
+
+// ════════════════════════════════════════════
+// 工作收入（完全修复版）
+// ════════════════════════════════════════════
+function timeToMinutes(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function saveWork(){
+  st.workCfg = {
+    sal: +document.getElementById('ws').value,
+    days: +document.getElementById('wday').value,
+    startTime: document.getElementById('wst').value,
+    endTime: document.getElementById('wet').value
+  };
+  document.getElementById('wf').style.display = 'none';
+  document.getElementById('wd').style.display = 'block';
+  save();
+  updWork();
+  speak(`配置已保存！一起努力赚钱钱～💰`, 3000);
+}
+
+function showWF(){
+  document.getElementById('wd').style.display = 'none';
+  document.getElementById('wf').style.display = 'block';
+  const c = st.workCfg;
+  if(c){
+    document.getElementById('ws').value = c.sal;
+    document.getElementById('wday').value = c.days;
+    document.getElementById('wst').value = c.startTime || '09:30';
+    document.getElementById('wet').value = c.endTime || '18:30';
+  }
+}
+
+function calcEarn(){
+  const c = st.workCfg;
+  if(!c || !c.startTime || !c.endTime) return null;
+  
+  const now = new Date();
+  const d = now.getDay();
+  
+  if(d === 0 || d === 6) return {earned:0, msg:'今天是休息日～', perMin:0};
+  
+  const startMin = timeToMinutes(c.startTime);
+  const endMin = timeToMinutes(c.endTime);
+  const workMin = endMin - startMin;
+  
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  
+  const perDay = c.sal / c.days;
+  const perMin = perDay / workMin;
+  
+  if(nowMin < startMin) {
+    return {earned:0, msg:`${c.startTime} 开始上班～`, perMin};
+  }
+  if(nowMin >= endMin) {
+    return {earned:perDay, msg:`今天下班啦！赚了 ¥${perDay.toFixed(2)}`, perMin};
+  }
+  
+  const elapsedMin = nowMin - startMin;
+  const remainMin = endMin - nowMin;
+  return {earned: elapsedMin * perMin, msg:`还有 ${Math.floor(remainMin/60)}:${(remainMin%60).toString().padStart(2,'0')} 下班`, perMin};
+}
+
+function fmtM(y){
+  return y >= 10000 ? `¥${(y/10000).toFixed(2)}万` : `¥${y.toFixed(2)}`;
+}
+
+function updWork(){
+  if(!st.workCfg) return;
+  const data = calcEarn();
+  if(!data) return;
+  
+  document.getElementById('earn').textContent = fmtM(data.earned || 0);
+  document.getElementById('emsg').textContent = data.msg || '';
+  document.getElementById('eper').textContent = data.perMin ? `每分钟赚 ¥${(data.perMin*60).toFixed(2)}` : '';
+  
+  const c = st.workCfg;
+  const pd = c.sal / c.days;
+  const workMin = timeToMinutes(c.endTime) - timeToMinutes(c.startTime);
+  const workHr = workMin / 60;
+  
+  document.getElementById('estats').innerHTML = [
+    ['月薪', fmtM(c.sal)],
+    ['日薪', fmtM(pd)],
+    ['时薪', fmtM(pd/workHr)],
+    ['分薪', fmtM(pd/workMin)]
+  ].map(([k,v])=>`<div class="ecard2"><div style="font-size:10px;color:#6b7280">${k}</div><div style="font-size:14px;color:#a78bfa;font-weight:700;font-family:monospace">${v}</div></div>`).join('');
+}
+
+setInterval(()=>{
+  if(document.getElementById('t-work').style.display !== 'none') updWork();
+}, 1000);
+
+// ════════════════════════════════════════════
+// 设置
+// ════════════════════════════════════════════
+function saveName(){
+  const n = document.getElementById('sn').value.trim();
+  if(n){
+    st.name = n;
+    save();
+    updHdr();
+    speak(`我叫${n}啦！✨`);
+  }
+}
+
+function mvPet(x, y){
+  st.px = Math.max(0, Math.min(x, window.innerWidth - 128));
+  st.py = Math.max(0, Math.min(y, window.innerHeight - 128));
+  updPetPos();
+  save();
+}
+
+function clearAll(){
+  localStorage.removeItem('dpet_v3_full');
+  location.reload();
+}
+
+// ════════════════════════════════════════════
+// 自动衰减
+// ════════════════════════════════════════════
+setInterval(()=>{
+  st.food = Math.max(0, st.food - 0.1);
+  st.energy = Math.max(0, st.energy - 0.05);
+  st.happy = Math.max(0, st.happy - 0.08);
+  
+  if(st.food < 20 && Math.random() < 0.02){
+    speak('汪汪～我肚子好饿呀…😢', 2000);
+  }
+  
+  if(st.energy < 20 && Math.random() < 0.02){
+    speak('呼噜噜～我好困呀…💤', 2000);
+  }
+  
+  updHdr();
+}, 5000);
+
+// ════════════════════════════════════════════
+// 初始化
+// ════════════════════════════════════════════
+function initStars(){
+  for(let i=0; i<70; i++){
+    const el = document.createElement('div');
+    el.className = 'star';
+    el.style.cssText = `width:${1+Math.random()}px;height:${1+Math.random()}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${1.5+Math.random()*2}s;`;
+    document.body.appendChild(el);
+  }
+}
+
+load();
+currentChar = st.char;
+currentCostume = st.costume;
+updHdr();
+updPetPos();
+renderCosTags();
+renderCharTags();
+renderTodos();
+renderTimers();
+document.getElementById('sn').value = st.name;
+if(st.workCfg){
+  document.getElementById('wf').style.display = 'none';
+  document.getElementById('wd').style.display = 'block';
+}
+initStars();
+setTimeout(()=>speak(SPEECHES.greet[Math.floor(Math.random()*SPEECHES.greet.length)]), 800);
+</script>
+</body>
+</html>
