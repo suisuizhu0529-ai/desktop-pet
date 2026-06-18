@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🐕 桌面宠物小饼干 - Electron 版
 
 完全跨平台的可爱桌面宠物应用，支持 macOS 和 Windows。
@@ -274,3 +275,7 @@ MIT License - 可自由使用和修改
 **版本**: v3.0 Electron
 **更新时间**: 2024
 **作者**: Made with 💕
+=======
+# desktop-pet
+A cute desktop pet application
+>>>>>>> e6ae055410394ef33c85ae22a953117e7558a4d7
