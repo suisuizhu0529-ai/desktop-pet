@@ -23,10 +23,10 @@
     "electron-store": "^8.1.0"
   },
   "devDependencies": {
-    "electron": "^latest",
-    "electron-builder": "^latest",
-    "concurrently": "^latest",
-    "wait-on": "^latest"
+    "electron": "latest",
+    "electron-builder": "latest",
+    "concurrently": "latest",
+    "wait-on": "latest"
   },
   "build": {
     "appId": "com.pet.desktop",
