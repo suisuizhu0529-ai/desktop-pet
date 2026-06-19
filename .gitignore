@@ -26,6 +26,9 @@ dist_electron/
 *.dmg
 *.exe
 *.AppImage
+*.blockmap
+builder-debug.yml
+latest.yml
 
 # Cache
 .cache/
