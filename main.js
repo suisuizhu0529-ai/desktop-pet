@@ -7,7 +7,7 @@ let tray;
 let uiWindow;
 
 // 检查是否是开发模式
-const DEV = process.env.NODE_ENV === 'development' || isDev;
+const DEV = process.env.NODE_ENV === 'development';
 
 function createPetWindow() {
   mainWindow = new BrowserWindow({
