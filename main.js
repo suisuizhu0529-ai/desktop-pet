@@ -11,10 +11,8 @@ const DEV = process.env.NODE_ENV === 'development';
 
 function createPetWindow() {
   mainWindow = new BrowserWindow({
-    width: 160,
-    height: 200,
-    minWidth: 160,
-    minHeight: 180,
+    width: 180,
+    height: 220,
     frame: false, // 无边框
     transparent: true, // 透明背景
     alwaysOnTop: true, // 始终在最前
@@ -33,7 +31,7 @@ function createPetWindow() {
     ? 'http://localhost:3000'
     : `file://${path.join(__dirname, 'index.html')}?mode=pet`;
   
-  mainWindow.loadURL(startUrl + '?mode=pet');
+  mainWindow.loadURL(startUrl);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -83,7 +81,7 @@ function createUIWindow() {
     ? 'http://localhost:3000'
     : `file://${path.join(__dirname, 'index.html')}?mode=ui`;
 
-  uiWindow.loadURL(startUrl + '?mode=ui');
+  uiWindow.loadURL(startUrl);
 
   uiWindow.on('closed', () => {
     uiWindow = null;
