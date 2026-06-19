@@ -6,6 +6,12 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{width:100vw;height:100vh;overflow:hidden;background:linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);font-family:'Microsoft YaHei','Segoe UI',sans-serif;}
+body.pet-mode{background:transparent !important;overflow:hidden;}
+body.pet-mode #panel,
+body.pet-mode #notifs,
+body.pet-mode #pfoot{display:none !important;}
+body.ui-mode{background:linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);}
+body.ui-mode #pet-wrap{display:none !important;}
 
 /* 星空 */
 .star{position:fixed;background:#fff;border-radius:0;animation:twinkle 2s infinite;}
@@ -277,13 +283,8 @@ input::placeholder{color:#4b5563;}
 // ════════════════════════════════════════════
 (function(){
   const m = new URLSearchParams(location.search).get('mode');
-  if(m==='pet'){
-    document.getElementById('panel').style.display='none';
-    document.body.style.background='transparent';
-  }
-  if(m==='ui'){
-    document.getElementById('pet-wrap').style.display='none';
-  }
+  if(m === 'pet') document.body.classList.add('pet-mode');
+  if(m === 'ui') document.body.classList.add('ui-mode');
 })();
 
 // ════════════════════════════════════════════
