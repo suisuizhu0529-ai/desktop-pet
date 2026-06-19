@@ -29,7 +29,7 @@ function createPetWindow() {
 
   const startUrl = DEV 
     ? 'http://localhost:3000'
-    : `file://${path.join(__dirname, '../build/index.html')}?mode=pet`;
+    : `file://${path.join(__dirname, 'index.html')}?mode=pet`;
   
   mainWindow.loadURL(startUrl + '?mode=pet');
 
@@ -79,7 +79,7 @@ function createUIWindow() {
 
   const startUrl = DEV 
     ? 'http://localhost:3000'
-    : `file://${path.join(__dirname, '../build/index.html')}?mode=ui`;
+    : `file://${path.join(__dirname, 'index.html')}?mode=ui`;
 
   uiWindow.loadURL(startUrl + '?mode=ui');
 
