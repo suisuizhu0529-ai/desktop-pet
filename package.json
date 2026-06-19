@@ -23,11 +23,6 @@
   "build": {
     "appId": "com.pet.desktop",
     "productName": "桌面宠物",
-    "files": [
-      "**/*",
-      "!dist/**/*",
-      "!node_modules/**/*"
-    ],
     "mac": {
       "target": [
         "dmg"
