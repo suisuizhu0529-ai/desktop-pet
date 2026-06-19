@@ -192,12 +192,16 @@ app.on('ready', () => {
   createPetWindow();
   createTray();
 
-  // 恢复窗口位置
+  // 恢复窗口位置，如果没有保存则放右上角
   try {
     const store = require('electron-store');
     const pos = store.get('petWindowPosition');
-    if (pos && mainWindow) {
+    if (pos && mainWindow && pos.x > 0 && pos.y > 0) {
       mainWindow.setPosition(pos.x, pos.y);
+    } else {
+      const { screen } = require('electron');
+      const { width } = screen.getPrimaryDisplay().workAreaSize;
+      mainWindow.setPosition(width - 200, 60);
     }
   } catch (e) {}
 });
