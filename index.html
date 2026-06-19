@@ -7,12 +7,12 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{width:100vw;height:100vh;overflow:hidden;background:linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);font-family:'Microsoft YaHei','Segoe UI',sans-serif;}
 body.pet-mode{background:transparent !important;overflow:hidden;}
-body.pet-mode #pet-wrap{position:absolute;top:8px;left:50%;transform:translateX(-50%);}
+body.pet-mode #pet-wrap{position:absolute;top:8px;left:50%;transform:translateX(-50%);border:2px solid red;}
 body.pet-mode #panel,
 body.pet-mode #notifs,
 body.pet-mode #pfoot,
 body.pet-mode .star{display:none !important;}
-body.pet-mode #pc{background:rgba(0,0,0,.3);border-radius:12px;}
+body.pet-mode #pc{background:rgba(255,255,255,.15);border-radius:12px;}
 body.ui-mode{background:linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);}
 body.ui-mode #pet-wrap{display:none !important;}
 
@@ -288,6 +288,11 @@ input::placeholder{color:#4b5563;}
   const m = new URLSearchParams(location.search).get('mode');
   if(m === 'pet') document.body.classList.add('pet-mode');
   if(m === 'ui') document.body.classList.add('ui-mode');
+  // Debug: show detected mode
+  var dbg = document.createElement('div');
+  dbg.textContent = 'mode='+m;
+  dbg.style.cssText = 'position:fixed;top:0;left:0;color:red;font-size:10px;z-index:99999;background:#000;padding:2px 4px;';
+  document.body.appendChild(dbg);
 })();
 
 // ════════════════════════════════════════════
