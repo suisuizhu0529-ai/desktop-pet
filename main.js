@@ -4,19 +4,19 @@ const isDev = require('electron-is-dev');
 
 let mainWindow;
 let tray;
-let uiWindow;
+let panelVisible = false;
 
 // 检查是否是开发模式
 const DEV = process.env.NODE_ENV === 'development';
 
 function createPetWindow() {
   mainWindow = new BrowserWindow({
-    width: 180,
-    height: 220,
-    frame: false, // 无边框
-    transparent: true, // 透明背景
-    alwaysOnTop: true, // 始终在最前
-    skipTaskbar: true, // 不在任务栏显示
+    width: 200,
+    height: 350,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
     resizable: false,
     webPreferences: {
       nodeIntegration: false,
@@ -28,13 +28,14 @@ function createPetWindow() {
   });
 
   const startUrl = DEV 
-    ? 'http://localhost:3000'
+    ? 'http://localhost:3000?mode=pet'
     : `file://${path.join(__dirname, 'index.html')}?mode=pet`;
   
   mainWindow.loadURL(startUrl);
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  mainWindow.on('close', (e) => {
+    e.preventDefault();
+    mainWindow.hide();
   });
 
   // 保存窗口位置
@@ -51,7 +52,7 @@ function createPetWindow() {
   mainWindow.webContents.on('context-menu', (e) => {
     e.preventDefault();
     const contextMenu = Menu.buildFromTemplate([
-      { label: '显示控制面板', click: showUIWindow },
+      { label: panelVisible ? '隐藏控制面板' : '显示控制面板', click: togglePanel },
       { type: 'separator' },
       { label: '置顶', click: toggleAlwaysOnTop },
       { type: 'separator' },
@@ -61,45 +62,19 @@ function createPetWindow() {
   });
 }
 
-function createUIWindow() {
-  uiWindow = new BrowserWindow({
-    width: 400,
-    height: 800,
-    minWidth: 350,
-    minHeight: 600,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      enableRemoteModule: false,
-      preload: path.join(__dirname, 'preload.js')
-    },
-    icon: path.join(__dirname, 'assets/icon.png'),
-    show: false
-  });
-
-  const startUrl = DEV 
-    ? 'http://localhost:3000'
-    : `file://${path.join(__dirname, 'index.html')}?mode=ui`;
-
-  uiWindow.loadURL(startUrl);
-
-  uiWindow.on('closed', () => {
-    uiWindow = null;
-  });
-
-  uiWindow.on('hide', () => {
-    if (tray) {
-      tray.setTitle('');
-    }
-  });
-}
-
-function showUIWindow() {
-  if (!uiWindow) {
-    createUIWindow();
+function togglePanel() {
+  panelVisible = !panelVisible;
+  if (!mainWindow) return;
+  if (panelVisible) {
+    mainWindow.setMinimumSize(580, 700);
+    mainWindow.setBounds({ width: 580, height: 800 }, true);
+  } else {
+    mainWindow.setResizable(true);
+    mainWindow.setMinimumSize(180, 320);
+    mainWindow.setBounds({ width: 200, height: 350 }, true);
+    mainWindow.setResizable(false);
   }
-  uiWindow.show();
-  uiWindow.focus();
+  mainWindow.webContents.send('toggle-panel', panelVisible);
 }
 
 function toggleAlwaysOnTop() {
@@ -114,7 +89,7 @@ function createTray() {
   
   const contextMenu = Menu.buildFromTemplate([
     { label: '打开小饼干', click: () => mainWindow && mainWindow.show() },
-    { label: '控制面板', click: showUIWindow },
+    { label: '控制面板', click: togglePanel },
     { type: 'separator' },
     { label: '置顶', click: toggleAlwaysOnTop },
     { label: '关于', click: () => createAboutWindow() },
@@ -123,7 +98,7 @@ function createTray() {
   ]);
 
   tray.setContextMenu(contextMenu);
-  tray.on('double-click', showUIWindow);
+  tray.on('double-click', togglePanel);
 }
 
 function createAboutWindow() {
@@ -181,27 +156,32 @@ function createAboutWindow() {
 }
 
 // IPC通信
-ipcMain.on('show-ui', showUIWindow);
-ipcMain.on('hide-ui', () => {
-  if (uiWindow) uiWindow.hide();
+ipcMain.on('toggle-panel-req', () => togglePanel());
+ipcMain.on('hide-panel-req', () => {
+  if (panelVisible) togglePanel();
 });
 ipcMain.on('toggle-always-on-top', toggleAlwaysOnTop);
 ipcMain.on('quit-app', () => app.quit());
+
+// 鼠标拖动窗口
+ipcMain.on('start-drag', (event, x, y) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    const [wx, wy] = win.getPosition();
+    win.setPosition(wx + x, wy + y);
+  }
+});
 
 app.on('ready', () => {
   createPetWindow();
   createTray();
 
-  // 恢复窗口位置，如果没有保存则放右上角
+  // 恢复窗口位置
   try {
     const store = require('electron-store');
     const pos = store.get('petWindowPosition');
-    if (pos && mainWindow && pos.x > 0 && pos.y > 0) {
+    if (pos && mainWindow) {
       mainWindow.setPosition(pos.x, pos.y);
-    } else {
-      const { screen } = require('electron');
-      const { width } = screen.getPrimaryDisplay().workAreaSize;
-      mainWindow.setPosition(width - 200, 60);
     }
   } catch (e) {}
 });
@@ -226,6 +206,5 @@ app.on('activate', () => {
 if (process.platform === 'darwin') {
   app.on('before-quit', () => {
     mainWindow = null;
-    uiWindow = null;
   });
 }

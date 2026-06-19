@@ -2,32 +2,35 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>桌面宠物 v3.0 - 完全版</title>
+<title>桌面宠物 v3.0 - Flex修复版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{width:100vw;height:100vh;overflow:hidden;background:linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);font-family:'Microsoft YaHei','Segoe UI',sans-serif;}
-body.pet-mode{background:transparent !important;overflow:hidden;}
-body.pet-mode #pet-wrap{position:absolute;top:8px;left:50%;transform:translateX(-50%);border:2px solid red;}
+body{width:100vw;height:100vh;overflow:hidden;background:linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);font-family:'Microsoft YaHei','Segoe UI',sans-serif;display:flex;flex-direction:row;align-items:flex-start;padding:10px;gap:10px;}
+body.pet-mode{background:transparent!important;overflow:hidden;padding:0!important;gap:0;}
 body.pet-mode #panel,
 body.pet-mode #notifs,
 body.pet-mode #pfoot,
-body.pet-mode .star{display:none !important;}
-body.pet-mode #pc{background:rgba(255,255,255,.15);border-radius:12px;}
-body.ui-mode{background:linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);}
-body.ui-mode #pet-wrap{display:none !important;}
+body.pet-mode .star{display:none;}
+body.pet-mode .qbtns{margin-top:-8px;}
+body.pet-mode .qbtn{cursor:pointer;}
+body.pet-mode #pc{cursor:default;}
 
 /* 星空 */
 .star{position:fixed;background:#fff;border-radius:0;animation:twinkle 2s infinite;}
 @keyframes twinkle{0%,100%{opacity:.15}50%{opacity:1}}
 
 /* 宠物主体 */
-#pet-wrap{position:fixed;cursor:grab;user-select:none;z-index:100;}
+#pet-wrap{cursor:grab;user-select:none;z-index:100;width:200px;flex-shrink:0;position:relative;margin-top:90px;}
 #pet-wrap:active{cursor:grabbing;}
+/* 宠物互动抖动反馈 */
+@keyframes petShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.pet-shake{animation:petShake .3s ease;}
+
 
 /* 说话气泡 */
 #speech{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
   background:#1e1b4b;border:2px solid #7c3aed;padding:8px 14px;color:#e2e8f0;
-  font-size:12px;max-width:220px;white-space:normal;text-align:center;
+  font-size:12px;max-width:180px;white-space:normal;text-align:center;
   box-shadow:3px 3px 0 #4c1d95;z-index:200;animation:bubbleIn .2s ease;line-height:1.5;}
 #speech::after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);
   border:5px solid transparent;border-top-color:#7c3aed;}
@@ -46,14 +49,13 @@ body.ui-mode #pet-wrap{display:none !important;}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-35px)}}
 
 /* 面板 */
-#panel{position:fixed;right:16px;top:16px;bottom:16px;width:318px;
-  background:#0a0a1a;border:2px solid #7c3aed;box-shadow:4px 4px 0 #4c1d95;
+#panel{flex:1;height:calc(100vh - 20px);background:#0a0a1a;border:2px solid #7c3aed;box-shadow:4px 4px 0 #4c1d95;
   display:flex;flex-direction:column;overflow:hidden;}
-#ph{background:#1e1b4b;border-bottom:2px solid #7c3aed;padding:12px 14px;}
-.pnrow{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:#e2e8f0;}
+#ph{background:#1e1b4b;border-bottom:2px solid #7c3aed;padding:12px 14px;-webkit-app-region:drag;user-select:none;}
+.pnrow{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:#e2e8f0;-webkit-app-region:no-drag;}
 .pname{font-size:15px;font-weight:700;color:#a78bfa;}
 .psub{font-size:11px;color:#8b5cf6;}
-.sbar-wrap{margin-top:4px;}
+.sbar-wrap{margin-top:4px;-webkit-app-region:no-drag;}
 .sbar-label{font-size:10px;color:#8b9ac8;margin-bottom:2px;display:flex;justify-content:space-between;}
 .sbar{height:6px;background:#1a1a3e;border:1px solid #4c1d95;}
 .sfill{height:100%;transition:width .5s;}
@@ -264,14 +266,6 @@ input::placeholder{color:#4b5563;}
       <input type="text" id="sn" placeholder="起个名字">
       <button class="pxbtn" onclick="saveName()" style="margin-top:8px">保存名字</button>
       
-      <div class="stitle" style="margin-top:16px">宠物位置</div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
-        <button class="sm" onclick="mvPet(20,20)">左上</button>
-        <button class="sm" onclick="mvPet(20,window.innerHeight-200)">左下</button>
-        <button class="sm" onclick="mvPet(window.innerWidth/2-64,window.innerHeight/2-80)">居中</button>
-        <button class="sm" onclick="mvPet(window.innerWidth-200,20)">右上</button>
-      </div>
-      
       <div class="stitle" style="margin-top:16px">数据管理</div>
       <button class="pxbtn sec" style="margin-top:8px" onclick="if(confirm('确定清除所有数据？'))clearAll()">🗑 清除本地数据</button>
     </div>
@@ -281,20 +275,6 @@ input::placeholder{color:#4b5563;}
 </div>
 
 <script>
-// ════════════════════════════════════════════
-// 模式检测：?mode=pet 桌面宠物 | ?mode=ui 控制面板
-// ════════════════════════════════════════════
-(function(){
-  const m = new URLSearchParams(location.search).get('mode');
-  if(m === 'pet') document.body.classList.add('pet-mode');
-  if(m === 'ui') document.body.classList.add('ui-mode');
-  // Debug: show detected mode
-  var dbg = document.createElement('div');
-  dbg.textContent = 'mode='+m;
-  dbg.style.cssText = 'position:fixed;top:0;left:0;color:red;font-size:10px;z-index:99999;background:#000;padding:2px 4px;';
-  document.body.appendChild(dbg);
-})();
-
 // ════════════════════════════════════════════
 // 像素艺术绘制引擎（完全按v3）
 // ════════════════════════════════════════════
@@ -453,6 +433,24 @@ function drawActionProps(action) {
   } else if (action === 'eat') {
     cx.fillStyle = '#B8C8D8';
     cx.fillRect(OX + 5*S, OY + 14*S, 5*S, 2*S);
+  } else if (action === 'roll') {
+    // 旋转线条
+    cx.strokeStyle = '#FBBF24'; cx.lineWidth = 2;
+    cx.beginPath(); cx.arc(OX + 8*S, OY + 8*S, 10*S, 0, Math.PI*1.5); cx.stroke();
+    cx.beginPath(); cx.arc(OX + 8*S, OY + 8*S, 11*S, 0, Math.PI*1.5); cx.stroke();
+  } else if (action === 'walk') {
+    // 脚印
+    cx.fillStyle = '#8B7355';
+    cx.fillRect(OX + 1*S, OY + 14*S, 3, 4);
+    cx.fillRect(OX + 4*S, OY + 13*S, 3, 4);
+    cx.fillRect(OX + 12*S, OY + 14*S, 3, 4);
+    cx.fillRect(OX + 15*S, OY + 13*S, 3, 4);
+  } else if (action === 'comfort') {
+    // 爱心
+    cx.fillStyle = '#F472B6';
+    cx.fillRect(OX + 13*S, OY + 2*S, 2*S, 2*S);
+    cx.fillRect(OX + 15*S, OY + 3*S, 1*S, 1*S);
+    cx.fillRect(OX + 12.5*S, OY + 3*S, 1*S, 1*S);
   }
 }
 
@@ -479,6 +477,13 @@ function petLoop() {
   requestAnimationFrame(petLoop);
 }
 petLoop();
+
+// 模式：隐藏/显示元素（在渲染启动后执行）
+(function(){
+  const m = new URLSearchParams(location.search).get('mode');
+  if(m === 'pet') document.body.classList.add('pet-mode');
+  if(m === 'ui') document.body.classList.add('ui-mode');
+})();
 
 // ════════════════════════════════════════════
 // 状态与逻辑
@@ -561,9 +566,7 @@ function updHdr(){
 }
 
 function updPetPos(){
-  const w = document.getElementById('pet-wrap');
-  w.style.left = st.px + 'px';
-  w.style.top = st.py + 'px';
+  // No-op: Flex layout handles positioning; IPC handles window drag
 }
 
 let speechTO = null;
@@ -595,7 +598,7 @@ function doAct(type){
   if(a.df !== undefined) st.food = Math.min(100, st.food + a.df);
   if(a.de !== undefined) st.energy = Math.max(0, Math.min(100, st.energy + a.de));
   
-  currentAction = type === 'eat' ? 'eat' : type === 'sleep' ? 'sleep' : type === 'bath' ? 'bath' : 'idle';
+  currentAction = type === 'eat' ? 'eat' : type === 'sleep' ? 'sleep' : type === 'bath' ? 'bath' : type === 'roll' ? 'roll' : type === 'walk' ? 'walk' : type === 'comfort' ? 'comfort' : type === 'play' ? 'play' : 'idle';
   
   const msg = a.msgs[Math.floor(Math.random() * a.msgs.length)];
   speak(msg, 4000);
@@ -603,29 +606,71 @@ function doAct(type){
   updHdr();
   save();
   
+  // 抖动反馈
+  const pw2 = document.getElementById('pet-wrap');
+  pw2.classList.add('pet-shake');
+  setTimeout(()=>pw2.classList.remove('pet-shake'), 300);
+  
   actTO = setTimeout(()=>{ currentAction='idle'; updHdr(); }, 3500);
 }
 
+// ═══ 跨窗口拖拽 ═══
+(function(){
+  var dragging = false, sx = 0, sy = 0;
+  var pw = document.getElementById('pet-wrap');
+  if(!pw) return;
+  pw.onmousedown = function(e){
+    if(e.target.tagName === 'BUTTON') return;
+    dragging = true;
+    sx = e.screenX; sy = e.screenY;
+  };
+  document.onmousemove = function(e){
+    if(!dragging) return;
+    window.petAPI.startDrag(e.screenX - sx, e.screenY - sy);
+    sx = e.screenX; sy = e.screenY;
+  };
+  document.onmouseup = function(){ dragging = false; };
+})();
+
+// ═══ 面板展开/收起 ═══
+(function(){
+  const m = new URLSearchParams(location.search).get('mode');
+  if(m !== 'pet') return;
+  window.petAPI.onPanelToggle(function(visible){
+    var panel = document.getElementById('panel');
+    var notifs = document.getElementById('notifs');
+    var pfoot = document.getElementById('pfoot');
+    if(visible){
+      document.body.classList.remove('pet-mode');
+      panel.style.display = 'flex';
+      notifs.style.display = '';
+      pfoot.style.display = '';
+    } else {
+      document.body.classList.add('pet-mode');
+      panel.style.display = 'none';
+      notifs.style.display = 'none';
+      pfoot.style.display = 'none';
+    }
+  });
+})();
+
 function particle(type){
   const emap = {pet:'💕', roll:'🌀', bath:'🫧', eat:'🍖', play:'🎾', sleep:'💤', walk:'🐾', comfort:'💕'};
+  const pw = document.getElementById('pet-wrap');
+  const rect = pw.getBoundingClientRect();
   for(let i=0; i<2; i++){
     const el = document.createElement('div');
     el.className = 'particle';
     el.textContent = emap[type] || '✨';
-    el.style.left = (st.px + 50 + (Math.random()-.5)*40) + 'px';
-    el.style.top = (st.py + 20 - i*15) + 'px';
+    el.style.left = (rect.left + 50 + (Math.random()-.5)*40) + 'px';
+    el.style.top = (rect.top + 20 - i*15) + 'px';
     el.style.animationDelay = (i*.15) + 's';
     document.body.appendChild(el);
     setTimeout(()=>el.remove(), 1100);
   }
 }
 
-// 拖拽
-let drag = false, ox = 0, oy = 0;
-const pw = document.getElementById('pet-wrap');
-pw.addEventListener('mousedown', e=>{drag=true; ox=e.clientX-st.px; oy=e.clientY-st.py; pw.style.transition='none'; e.preventDefault();});
-document.addEventListener('mousemove', e=>{if(!drag)return; st.px=e.clientX-ox; st.py=e.clientY-oy; updPetPos();});
-document.addEventListener('mouseup', ()=>{if(drag){drag=false; pw.style.transition=''; save();}});
+// 拖拽已由 IPC 窗口拖动接管（见上方跨窗口拖拽代码）
 
 // 标签切换
 function sw(name){
@@ -873,7 +918,7 @@ function updWork(){
   
   document.getElementById('earn').textContent = fmtM(data.earned || 0);
   document.getElementById('emsg').textContent = data.msg || '';
-  document.getElementById('eper').textContent = data.perMin ? `每分钟赚 ¥${(data.perMin*60).toFixed(2)}` : '';
+  document.getElementById('eper').textContent = data.perMin ? `每小时赚 ¥${(data.perMin*60).toFixed(2)}` : '';
   
   const c = st.workCfg;
   const pd = c.sal / c.days;
@@ -906,8 +951,8 @@ function saveName(){
 }
 
 function mvPet(x, y){
-  st.px = Math.max(0, Math.min(x, window.innerWidth - 128));
-  st.py = Math.max(0, Math.min(y, window.innerHeight - 128));
+  // Position clamping removed — IPC handles window movement
+  return;
   updPetPos();
   save();
 }
