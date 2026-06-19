@@ -17,7 +17,9 @@ function createPetWindow() {
     minHeight: 180,
     frame: false, // 无边框
     transparent: true, // 透明背景
-    alwaysOnTop: false,
+    alwaysOnTop: true, // 始终在最前
+    skipTaskbar: true, // 不在任务栏显示
+    resizable: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

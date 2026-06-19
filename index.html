@@ -273,6 +273,20 @@ input::placeholder{color:#4b5563;}
 
 <script>
 // ════════════════════════════════════════════
+// 模式检测：?mode=pet 桌面宠物 | ?mode=ui 控制面板
+// ════════════════════════════════════════════
+(function(){
+  const m = new URLSearchParams(location.search).get('mode');
+  if(m==='pet'){
+    document.getElementById('panel').style.display='none';
+    document.body.style.background='transparent';
+  }
+  if(m==='ui'){
+    document.getElementById('pet-wrap').style.display='none';
+  }
+})();
+
+// ════════════════════════════════════════════
 // 像素艺术绘制引擎（完全按v3）
 // ════════════════════════════════════════════
 const CV = document.getElementById('pc');
