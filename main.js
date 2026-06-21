@@ -5,11 +5,16 @@ const isDev = require('electron-is-dev');
 let mainWindow;
 let tray;
 let panelVisible = false;
+let isQuitting = false;
 
 // 检查是否是开发模式
 const DEV = process.env.NODE_ENV === 'development';
 
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+app.commandLine.appendSwitch('disable-http-cache');
+
 function createPetWindow() {
+  const userDataPath = app.getPath('userData');
   mainWindow = new BrowserWindow({
     width: 200,
     height: 350,
@@ -22,7 +27,10 @@ function createPetWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      session: {
+        cachePath: path.join(userDataPath, 'cache')
+      }
     },
     icon: path.join(__dirname, 'assets/icon.png')
   });
@@ -34,8 +42,10 @@ function createPetWindow() {
   mainWindow.loadURL(startUrl);
 
   mainWindow.on('close', (e) => {
-    e.preventDefault();
-    mainWindow.hide();
+    if (!isQuitting) {
+      e.preventDefault();
+      mainWindow.hide();
+    }
   });
 
   // 保存窗口位置
@@ -54,9 +64,9 @@ function createPetWindow() {
     const contextMenu = Menu.buildFromTemplate([
       { label: panelVisible ? '隐藏控制面板' : '显示控制面板', click: togglePanel },
       { type: 'separator' },
-      { label: '置顶', click: toggleAlwaysOnTop },
+      { label: '置顶', type: 'checkbox', checked: mainWindow.isAlwaysOnTop(), click: toggleAlwaysOnTop },
       { type: 'separator' },
-      { label: '退出', click: () => app.quit() }
+      { label: '退出', click: () => { isQuitting = true; app.quit(); } }
     ]);
     contextMenu.popup();
   });
@@ -81,6 +91,19 @@ function toggleAlwaysOnTop() {
   if (mainWindow) {
     const isAlwaysOnTop = mainWindow.isAlwaysOnTop();
     mainWindow.setAlwaysOnTop(!isAlwaysOnTop);
+    // 更新托盘菜单的置顶状态
+    if (tray) {
+      const contextMenu = Menu.buildFromTemplate([
+        { label: '打开小饼干', click: () => mainWindow && mainWindow.show() },
+        { label: '控制面板', click: togglePanel },
+        { type: 'separator' },
+        { label: '置顶', type: 'checkbox', checked: !isAlwaysOnTop, click: toggleAlwaysOnTop },
+        { label: '关于', click: () => createAboutWindow() },
+        { type: 'separator' },
+        { label: '退出', click: () => { isQuitting = true; app.quit(); } }
+      ]);
+      tray.setContextMenu(contextMenu);
+    }
   }
 }
 
@@ -91,10 +114,10 @@ function createTray() {
     { label: '打开小饼干', click: () => mainWindow && mainWindow.show() },
     { label: '控制面板', click: togglePanel },
     { type: 'separator' },
-    { label: '置顶', click: toggleAlwaysOnTop },
+    { label: '置顶', type: 'checkbox', checked: mainWindow && mainWindow.isAlwaysOnTop(), click: toggleAlwaysOnTop },
     { label: '关于', click: () => createAboutWindow() },
     { type: 'separator' },
-    { label: '退出', click: () => app.quit() }
+    { label: '退出', click: () => { isQuitting = true; app.quit(); } }
   ]);
 
   tray.setContextMenu(contextMenu);
@@ -161,7 +184,7 @@ ipcMain.on('hide-panel-req', () => {
   if (panelVisible) togglePanel();
 });
 ipcMain.on('toggle-always-on-top', toggleAlwaysOnTop);
-ipcMain.on('quit-app', () => app.quit());
+ipcMain.on('quit-app', () => { isQuitting = true; app.quit(); });
 
 // 鼠标拖动窗口
 ipcMain.on('start-drag', (event, x, y) => {
