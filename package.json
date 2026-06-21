@@ -23,14 +23,21 @@
   "build": {
     "appId": "com.pet.desktop",
     "productName": "桌面宠物",
-    "mac": {
-      "target": [
-        "dmg"
-      ]
+    "icon": "assets/icon",
+    "directories": {
+      "output": "dist"
     },
+    "files": [
+      "**/*",
+      "!node_modules/${/*}"
+    ],
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
-        "nsis"
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
       ]
     },
     "nsis": {
@@ -39,6 +46,35 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "桌面宠物"
+    },
+    "mac": {
+      "icon": "assets/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.entertainment",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "dmg": {
+      "sign": false,
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
     }
   }
 }

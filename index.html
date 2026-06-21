@@ -38,7 +38,8 @@ body.pet-mode #pc{cursor:default;}
 @keyframes bubbleIn{from{opacity:0;transform:translateY(6px) translateX(-50%)}to{opacity:1;transform:translateY(0) translateX(-50%)}}
 
 /* 快捷按钮 */
-.qbtns{display:flex;justify-content:center;gap:4px;margin-top:5px;}
+.qbtns{display:flex;justify-content:center;gap:4px;margin-top:5px;opacity:0;pointer-events:none;transition:opacity .3s ease;}
+#pet-wrap:hover .qbtns{opacity:1;pointer-events:auto;}
 .qbtn{width:28px;height:28px;border:2px solid #7c3aed;background:#1e1b4b;color:#fff;
   font-size:13px;cursor:pointer;transition:all .1s;box-shadow:2px 2px 0 #4c1d95;}
 .qbtn:hover{background:#7c3aed;transform:translate(-1px,-1px);box-shadow:3px 3px 0 #4c1d95;}
@@ -614,22 +615,45 @@ function doAct(type){
   actTO = setTimeout(()=>{ currentAction='idle'; updHdr(); }, 3500);
 }
 
-// ═══ 跨窗口拖拽 ═══
+// ═══ 跨窗口拖拽 + 点击宠物触发哄哄我 ═══
 (function(){
-  var dragging = false, sx = 0, sy = 0;
+  var dragging = false, sx = 0, sy = 0, hasMoved = false;
   var pw = document.getElementById('pet-wrap');
+  var pc = document.getElementById('pc');
   if(!pw) return;
   pw.onmousedown = function(e){
+    // 只处理左键（button === 0），忽略右键和中键
+    if(e.button !== 0) return;
     if(e.target.tagName === 'BUTTON') return;
     dragging = true;
+    hasMoved = false;
     sx = e.screenX; sy = e.screenY;
   };
   document.onmousemove = function(e){
     if(!dragging) return;
-    window.petAPI.startDrag(e.screenX - sx, e.screenY - sy);
-    sx = e.screenX; sy = e.screenY;
+    // 检测是否真正移动了（移动超过5px才算拖拽）
+    if(Math.abs(e.screenX - sx) > 5 || Math.abs(e.screenY - sy) > 5) {
+      hasMoved = true;
+    }
+    if(hasMoved) {
+      window.petAPI.startDrag(e.screenX - sx, e.screenY - sy);
+      sx = e.screenX; sy = e.screenY;
+    }
   };
-  document.onmouseup = function(){ dragging = false; };
+  document.onmouseup = function(e){
+    // 只处理左键
+    if(e.button !== 0) {
+      dragging = false;
+      hasMoved = false;
+      return;
+    }
+    if(dragging && !hasMoved && e.target === pc) {
+      // 点击宠物（非拖拽）触发哄哄我
+      doAct('comfort');
+    }
+    dragging = false;
+    hasMoved = false;
+  };
 })();
 
 // ═══ 面板展开/收起 ═══

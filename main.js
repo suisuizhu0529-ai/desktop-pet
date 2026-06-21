@@ -26,7 +26,6 @@ function createPetWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false,
       preload: path.join(__dirname, 'preload.js'),
       session: {
         cachePath: path.join(userDataPath, 'cache')
@@ -184,7 +183,7 @@ ipcMain.on('hide-panel-req', () => {
   if (panelVisible) togglePanel();
 });
 ipcMain.on('toggle-always-on-top', toggleAlwaysOnTop);
-ipcMain.on('quit-app', () => { isQuitting = true; app.quit(); });
+ipcMain.on('quit-app', () => app.quit());
 
 // 鼠标拖动窗口
 ipcMain.on('start-drag', (event, x, y) => {
