@@ -167,13 +167,6 @@ npm install
 npm start
 ```
 
-### 问题：窗口位置错乱
-
-**解决方案**：
-应用会自动记忆窗口位置。如需重置：
-1. 打开设置 → 快捷操作
-2. 选择一个位置（左上、左下、右上、居中）
-
 ### 问题：宠物显示不正常
 
 **解决方案**：
@@ -274,7 +267,7 @@ MIT License - 可自由使用和修改
 
 **版本**: v3.0 Electron
 **更新时间**: 2024
-**作者**: Made with 💕
+**作者**: Made with Kate
 =======
 # desktop-pet
 A cute desktop pet application
