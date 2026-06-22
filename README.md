@@ -1,177 +1,276 @@
-# 🐕 桌面宠物小饼干 / desktop-pet
+# 🐕 桌面宠物小饼干 - Electron 版
 
-A small, cute cross-platform desktop pet application (Electron) — completely optional Chinese/English documentation.
+完全跨平台的可爱桌面宠物应用，支持 macOS 和 Windows。
 
-一个可爱的跨平台桌面宠物应用（Electron 版），支持 macOS 和 Windows。
+## 📋 项目文件结构
 
----
+```
+desktop-pet/
+├── main.js              # Electron 主进程
+├── preload.js           # 安全通信层
+├── package.json         # 项目配置
+├── index.html           # 应用界面
+├── build-win.js         # Windows 构建脚本（可选）
+├── build-mac.js         # macOS 构建脚本（可选）
+├── .gitignore           # Git 忽略文件
+├── README.md            # 项目说明
+└── assets/              # 图标资源
+    ├── icon.png         # 应用图标 (256x256)
+    ├── icon.ico         # Windows 图标
+    └── icon.icns        # macOS 图标
+```
 
-## Features / 特性
+## 🚀 快速开始
 
-- Cross-platform: macOS and Windows
-- Independent pet window + optional control panel
-- Multiple pet characters and outfits
-- Real-time income calculation, timers, todo list
-- Auto-save to local storage
-- System tray integration
+### 环境要求
+- **Node.js**: v14.0 以上
+- **npm**: v6.0 以上 
+- **Git**: 用于版本管理（可选）
 
-- 跨平台（macOS & Windows）
-- 独立宠物窗口 + 可隐藏控制面板
-- 多种宠物形象与换装
-- 实时工资计算、计时器、待办事项
-- 自动保存（LocalStorage）
-- 系统托盘集成
-
----
-
-## Quick Start / 快速开始
-
-Requirements / 环境要求
-
-- Node.js >= 14
-- npm >= 6
-
-1) Install dependencies
+### 1️⃣ 安装依赖
 
 ```bash
 npm install
 ```
 
-2) Run in development mode
+### 2️⃣ 开发模式运行
 
 ```bash
 npm start
 ```
 
-This will start the renderer dev server (if used) and open the Electron window.
+这会同时启动：
+- React 开发服务器（端口 3000）
+- Electron 应用窗口
 
-3) Build / 打包
+### 3️⃣ 打包构建
 
-- Windows
+#### Windows 平台
 
 ```bash
 npm run electron-build -- --win
 ```
 
-- macOS
+生成文件：
+- `dist/桌面宠物 Setup.exe` - 安装程序
+- `dist/桌面宠物 3.0.0.exe` - 便携版
+
+#### macOS 平台
 
 ```bash
 npm run electron-build -- --mac
 ```
 
-Or build both (run on target platforms):
+生成文件：
+- `dist/桌面宠物-3.0.0.dmg` - 安装盘镜像
+- `dist/桌面宠物-3.0.0.zip` - 压缩包
+
+#### 同时构建两个平台（需要在各自系统上）
 
 ```bash
 npm run electron-build
 ```
 
-Generated artifacts typically under `dist/`.
+## 🎮 使用说明
 
----
+### 宠物窗口模式
+- **右键点击宠物** - 打开快捷菜单
+- **悬停宠物** - 显示互动按钮
+- **拖拽宠物** - 移动窗口位置
+- **⚙️ 按钮** - 打开控制面板
 
-## Usage / 使用说明
+### 控制面板功能
 
-- Right-click the pet to open the quick menu
-- Hover to show interaction buttons
-- Drag to move the pet window
-- Use the settings (⚙️) button to open the control panel
+| 标签 | 功能 |
+|------|------|
+| 🐾 | 与宠物互动、换装、切换角色 |
+| 📋 | 管理待办事项 |
+| ⏱️ | 创建和管理计时器 |
+| 💰 | 工作收入统计和配置 |
+| ⚙️ | 宠物设置、快捷操作、数据管理 |
 
-Control panel pages include: pet interactions, todo list, timers, work/income settings, general settings and data management.
+### 宠物互动
 
-Interaction examples:
-- Happiness, Hunger, Energy stats (can be changed by actions such as petting, feeding, resting)
+#### 快乐度 ❤️
+- 摸摸头 +10
+- 哄哄我 +8
+- 玩玩具 +12
 
----
+#### 饱腹度 🍗
+- 吃零食 +20
 
-## Configuration / 开发与配置
+#### 活力 ⚡
+- 去睡觉 +30
+- 散步走走 -5（降低消耗���
 
-- Application config: edit `package.json` → `build` section for `productName`, `appId`, mac/win specific options.
+### 工作配置
 
-Example:
+1. 打开控制面板 → 💰 工作
+2. 点击 "⚙ 修改配置"
+3. 设置以下参数：
+   - **月薪**：税后月工资（元）
+   - **月工作天数**：默认 22 天
+   - **上班时间**：默认 09:30
+   - **下班时间**：默认 18:30
+4. 点击 "💾 保存"
 
-```json
-{
-  "build": {
-    "appId": "com.yourcompany.pet",
-    "productName": "Desktop Pet",
-    "mac": { "category": "public.app-category.utilities" },
-    "win": { "certificateFile": "path/to/cert.pfx" }
-  }
-}
-```
+💡 **提示**：
+- 系统会自动计算每天、每小时、每分钟的收入
+- 周末（周六日）自动休息不计工资
+- 工作时间外显示距下班时间
 
-- Window size: edit `main.js` → `createPetWindow()` and adjust `width` / `height`.
+## 🎨 自定义
 
-- Pet appearance: edit `index.html` (or the renderer code) where THEMES/FRAMES are defined.
+### 修改宠物名字
+设置 → 宠物设置 → 输入名字 → 保存名字
 
----
+### 修改宠物形象
+控制面板 → 🐾 宠物 → 选择角色
+- 🐕 狗狗
+- 🐰 小白兔
+- 🦊 小狐狸
+- 🐯 白虎
 
-## Data Persistence / 数据保存
+### 换装扮
+控制面板 → 🐾 宠物 → 换装扮
+- 日常装
+- 🧢 棒球帽
+- 🧥 卫衣
+- 🎀 蝴蝶结
+- 👑 皇冠
+- 🕶️ 墨镜
 
-All user data is saved locally (LocalStorage / electron-store depending on implementation):
-- Pet state (name, avatar, stats)
-- Todo items
-- Timers
-- Work/income settings
+## 💾 数据保存
 
-To clear local data: Settings → Data management → Clear local data.
+所有数据自动保存到本地 LocalStorage：
+- 宠物状态（名字、形象、属性）
+- 待办清单
+- 计时器设置
+- 工作配置
 
----
+**清除数据**：设置 → 数据管理 → 清除本地数据
 
-## Troubleshooting / 常见问题
+## 🔧 故障排除
 
-Problem: App won't start
+### 问题：应用无法启动
 
+**解决方案**：
 ```bash
+# 清除缓存
 rm -rf node_modules package-lock.json
+
+# 重新安装
 npm install
+
+# 重新启动
 npm start
 ```
 
-Problem: Pet rendering incorrectly
+### 问题：窗口位置错乱
 
+**解决方案**：
+应用会自动记忆窗口位置。如需重置：
+1. 打开设置 → 快捷操作
+2. 选择一个位置（左上、左下、右上、居中）
+
+### 问题：宠物显示不正常
+
+**解决方案**：
 ```bash
+# 完全清除缓存
 npm cache clean --force
 npm install
 npm start
 ```
 
-Problem: macOS "App is damaged" gatekeeper message
+### 问题：macOS 显示"文件已损坏"
 
+**解决方案**：
 ```bash
-# Allow the app to run
-xattr -d com.apple.quarantine /Applications/Desktop\ Pet.app
+# 允许应用运行
+xattr -d com.apple.quarantine /Applications/桌面宠物.app
 ```
 
+## 🛠️ 开发指南
+
+### 修改应用配置
+
+编辑 `package.json` 中的 `build` 部分：
+
+```json
+{
+  "build": {
+    "appId": "com.yourcompany.pet",
+    "productName": "你的应用名称",
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "certificateFile": "path/to/cert.pfx"
+    }
+  }
+}
+```
+
+### 修改窗口大小
+
+编辑 `main.js` 中的 `createPetWindow()`：
+
+```javascript
+mainWindow = new BrowserWindow({
+  width: 160,    // 修改这里
+  height: 200,   // 修改这里
+  // ...
+});
+```
+
+### 修改宠物绘制
+
+编辑 `index.html` 中的 `THEMES` 和 `FRAMES` 对象来自定义宠物外观。
+
+## 📦 依赖列表
+
+### 生产依赖
+- `electron-is-dev` - 开发环境检测
+- `electron-store` - 本地数据存储
+
+### 开发依赖
+- `electron` - Electron 框架
+- `electron-builder` - 应用打包工具
+- `concurrently` - 并发执行命令
+- `wait-on` - 等待服务启动
+
+## 🔐 安全性
+
+该应用采用以下安全措施：
+- 禁用 Node 集成（`nodeIntegration: false`）
+- 启用上下文隔离（`contextIsolation: true`）
+- 使用 Preload 脚本进行安全通信
+- 不允许远程模块（`enableRemoteModule: false`）
+
+## 📝 许可证
+
+MIT License - 可自由使用和修改
+
+## 🎉 特性
+
+✅ 完全跨平台（macOS 和 Windows）
+✅ 独立宠物窗口 + 可隐藏控制面板
+✅ 4 种宠物形象 + 6 种服装
+✅ 实时工资计算
+✅ 计时器提醒（带宠物互动）
+✅ 待办事项管理
+✅ 自动数据保存
+✅ 系统托盘集成
+✅ 像素艺术风格
+✅ 丰富的互动反馈
+
+## 🐛 反馈和建议
+
+如发现 bug 或有改进建议，欢迎反馈！
+
 ---
 
-## Development Dependencies / 依赖
-
-Common dependencies used in this project:
-
-- electron (dev)
-- electron-builder (dev)
-- concurrently
-- wait-on
-- electron-store
-- electron-is-dev
-
-Check `package.json` for the exact dependency list.
-
----
-
-## Contributing
-
-Contributions are welcome — please open an issue or a pull request with changes. Provide screenshots and steps to reproduce for UI/behavior changes.
-
----
-
-## License / 许可证
-
-MIT License
-
----
-
-Version: v3.0 (Electron)
-Updated: 2026-06-22
-Author: Made with Kate / suisuizhu0529-ai
+**版本**: v3.0 Electron
+**更新时间**: 2024
+**作者**: Made with 💕
